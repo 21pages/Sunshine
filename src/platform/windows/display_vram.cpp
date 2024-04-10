@@ -958,6 +958,8 @@ namespace platf::dxgi {
     const bool frame_update_flag = frame_info.LastPresentTime.QuadPart != 0;
     const bool update_flag = mouse_update_flag || frame_update_flag;
 
+    BOOST_LOG(info) << "mouse_update_flag [" << mouse_update_flag << ", frame_update_flag" << frame_update_flag;
+
     if (!update_flag) {
       return capture_e::timeout;
     }

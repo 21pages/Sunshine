@@ -209,7 +209,9 @@ namespace platf::dxgi {
 
       // Start new frame pacing group if necessary, snapshot() is called with non-zero timeout
       if (status == capture_e::timeout || (status == capture_e::ok && !frame_pacing_group_start)) {
+        BOOST_LOG(info) << "Begin new frame pacing group";
         status = snapshot(pull_free_image_cb, img_out, 1000ms, *cursor);
+        BOOST_LOG(info) << "After new frame pacing group";
 
         if (status == capture_e::ok && img_out) {
           frame_pacing_group_start = img_out->frame_timestamp;
@@ -229,10 +231,11 @@ namespace platf::dxgi {
         case platf::capture_e::interrupted:
           return status;
         case platf::capture_e::timeout:
-          if (!push_captured_image_cb(std::move(img_out), false)) {
-            return capture_e::ok;
-          }
-          break;
+          continue;
+          // if (!push_captured_image_cb(std::move(img_out), false)) {
+          //   return capture_e::ok;
+          // }
+          // break;
         case platf::capture_e::ok:
           if (!push_captured_image_cb(std::move(img_out), true)) {
             return capture_e::ok;

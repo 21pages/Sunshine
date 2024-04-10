@@ -1176,7 +1176,11 @@ namespace video {
           }
 
           if (frame_captured) {
+            BOOST_LOG(info) << "frame captured";
             capture_ctx->images->raise(img);
+          }
+          else {
+            BOOST_LOG(info) << "frame not captured";
           }
 
           ++capture_ctx;
@@ -1288,6 +1292,8 @@ namespace video {
       return -1;
     }
 
+    BOOST_LOG(debug) << "encode_avcodec Sent frame "sv << frame_nr << " to encoder"sv;
+
     while (ret >= 0) {
       auto packet = std::make_unique<packet_raw_avcodec>();
       auto av_packet = packet.get()->av_packet;
@@ -1364,9 +1370,11 @@ namespace video {
   int
   encode(int64_t frame_nr, encode_session_t &session, safe::mail_raw_t::queue_t<packet_t> &packets, void *channel_data, std::optional<std::chrono::steady_clock::time_point> frame_timestamp) {
     if (auto avcodec_session = dynamic_cast<avcodec_encode_session_t *>(&session)) {
+      BOOST_LOG(info) << "encode_nvenc"sv;
       return encode_avcodec(frame_nr, *avcodec_session, packets, channel_data, frame_timestamp);
     }
     else if (auto nvenc_session = dynamic_cast<nvenc_encode_session_t *>(&session)) {
+      BOOST_LOG(info) << "encode_nvenc"sv;
       return encode_nvenc(frame_nr, *nvenc_session, packets, channel_data, frame_timestamp);
     }
 
@@ -1779,6 +1787,7 @@ namespace video {
       // Encode at a minimum of 10 FPS to avoid image quality issues with static content
       if (!requested_idr_frame || images->peek()) {
         if (auto img = images->pop(100ms)) {
+          BOOST_LOG(info) << "pop succ"sv;
           frame_timestamp = img->frame_timestamp;
           if (session->convert(*img)) {
             BOOST_LOG(error) << "Could not convert image"sv;
@@ -1787,6 +1796,10 @@ namespace video {
         }
         else if (!images->running()) {
           break;
+        }
+        else {
+          BOOST_LOG(info) << "pop timeout"sv;
+          continue;
         }
       }
 
